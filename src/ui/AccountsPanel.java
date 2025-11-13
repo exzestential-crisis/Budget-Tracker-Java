@@ -101,6 +101,7 @@ public class AccountsPanel extends JPanel {
         
         return emptyPanel;
     }
+
 private JPanel createTableView() {
     JPanel tablePanel = new JPanel(new BorderLayout());
     tablePanel.setBackground(BACKGROUND);
@@ -114,17 +115,7 @@ private JPanel createTableView() {
         }
     };
 
-    accountsTable = new JTable(tableModel) {
-        @Override
-        public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
-            Component c = super.prepareRenderer(renderer, row, column);
-            if (c instanceof JComponent) {
-                ((JComponent) c).setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-            }
-            return c;
-        }
-    };
-
+    accountsTable = new JTable(tableModel);
     accountsTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
     accountsTable.setRowHeight(60);
     accountsTable.setShowGrid(false);
@@ -132,7 +123,7 @@ private JPanel createTableView() {
     accountsTable.setFillsViewportHeight(true);
     accountsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    // Modern header style with solid color
+    // Modern header style
     JTableHeader header = accountsTable.getTableHeader();
     header.setFont(new Font("Segoe UI", Font.BOLD, 14));
     header.setBackground(PRIMARY);
@@ -140,61 +131,59 @@ private JPanel createTableView() {
     header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, PRIMARY));
     header.setReorderingAllowed(false);
 
-    // Custom renderer for rows
+    // Simplified custom renderer
     accountsTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                        boolean isSelected, boolean hasFocus, int row, int column) {
-
-            JPanel rowPanel = new JPanel(new BorderLayout());
-
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            
             // Alternating row colors
-            Color bgColor = (row % 2 == 0) ? CARD_BG : new Color(235, 237, 240); // light grey
-            rowPanel.setBackground(bgColor);
-            rowPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(BORDER, 1, true),
-                    BorderFactory.createEmptyBorder(8, 10, 8, 10)
+            if (!isSelected) {
+                setBackground((row % 2 == 0) ? CARD_BG : new Color(235, 237, 240));
+                setForeground(TEXT_PRIMARY);
+            } else {
+                setBackground(new Color(100, 149, 237)); // Cornflower blue
+                setForeground(Color.WHITE);
+            }
+            
+            setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(isSelected ? PRIMARY.darker() : BORDER, isSelected ? 2 : 1, true),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
             ));
-
-            JLabel label = new JLabel(value.toString());
-            label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-            label.setForeground(TEXT_PRIMARY);
-
+            
+            // Column-specific styling
             if (column == 0) { // Type badge
                 String type = value.toString();
                 Color typeColor = type.equals("Regular") ? PRIMARY :
-                                  type.equals("Savings") ? SUCCESS :
-                                  DANGER;
-                label.setForeground(typeColor);
-                label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+                                  type.equals("Savings") ? SUCCESS : DANGER;
+                setForeground(isSelected ? Color.WHITE : typeColor);
+                setFont(new Font("Segoe UI", Font.BOLD, 13));
+                setHorizontalAlignment(SwingConstants.LEFT);
             } else if (column == 2) { // Balance
-                label.setHorizontalAlignment(SwingConstants.RIGHT);
-                label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                setHorizontalAlignment(SwingConstants.RIGHT);
+                setFont(new Font("Segoe UI", Font.BOLD, 14));
+            } else {
+                setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                setHorizontalAlignment(SwingConstants.LEFT);
             }
-
-            rowPanel.add(label, BorderLayout.CENTER);
-
-            if (isSelected) {
-                // Make selection very obvious
-                rowPanel.setBackground(new Color(100, 149, 237)); // Cornflower blue
-                label.setForeground(Color.WHITE);
-                rowPanel.setBorder(BorderFactory.createCompoundBorder(
-                    BorderFactory.createLineBorder(PRIMARY.darker(), 2, true),
-                    BorderFactory.createEmptyBorder(8, 10, 8, 10)
-                ));
-            }
-
-            return rowPanel;
+            
+            return this;
         }
     });
 
-    // Allow deselection on click
+    // Clean deselection logic
     accountsTable.addMouseListener(new MouseAdapter() {
         @Override
-        public void mousePressed(MouseEvent e) {
+        public void mouseClicked(MouseEvent e) {
             int row = accountsTable.rowAtPoint(e.getPoint());
-            if (accountsTable.getSelectedRow() == row) {
-                accountsTable.clearSelection();
+            if (row != -1) {
+                if (accountsTable.isRowSelected(row)) {
+                    // Deselect if clicking the already-selected row
+                    accountsTable.clearSelection();
+                } else {
+                    accountsTable.setRowSelectionInterval(row, row);
+                }
             }
         }
     });
@@ -215,8 +204,6 @@ private JPanel createTableView() {
 
     return tablePanel;
 }
-
-
 
     private JPanel createButtonPanel() {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
@@ -490,7 +477,7 @@ private JPanel createTableView() {
                                         badgeColor.getBlue(), 30));
         typeBadge.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(badgeColor, 1, true),
-            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+            BorderFactory.createEmptyBorder(0, 10, 5, 10)
         ));
         typeBadge.setMaximumSize(new Dimension(360, 40));
 

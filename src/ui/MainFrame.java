@@ -170,13 +170,13 @@ public class MainFrame extends JFrame {
             }
         });
 
-        // Panels
+        // Panels - Create AccountsPanel FIRST
         AccountsPanel accountsPanel = new AccountsPanel(accountsList);
-        TransactionsPanel transactionsPanel = new TransactionsPanel(transactionsList);
+        TransactionsPanel transactionsPanel = new TransactionsPanel(transactionsList, accountsPanel);
         CategoriesPanel categoriesPanel = new CategoriesPanel(
                 categoriesList, transactionsList, accountsList, transactionsPanel, accountsPanel
         );
-
+        
         tabs.addTab("Categories", categoriesPanel);
         tabs.addTab("Accounts", accountsPanel);
         tabs.addTab("Transactions", transactionsPanel);

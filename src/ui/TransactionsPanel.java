@@ -1,11 +1,14 @@
 package ui;
 
 import model.Transaction;
+import model.Account;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
 public class TransactionsPanel extends JPanel {
@@ -13,6 +16,8 @@ public class TransactionsPanel extends JPanel {
     private ArrayList<Transaction> transactions;
     private DefaultTableModel tableModel;
     private JTable transactionTable;
+    private AccountsPanel accountsPanel; // Add this field
+
 
     // Colors
     private static final Color BACKGROUND = new Color(248, 249, 250);
@@ -25,31 +30,31 @@ public class TransactionsPanel extends JPanel {
     private static final Color BORDER = new Color(229, 231, 235);
     private static final Color HOVER = new Color(243, 244, 246);
 
-    public TransactionsPanel(ArrayList<Transaction> transactions) {
-        this.transactions = transactions;
+    public TransactionsPanel(ArrayList<Transaction> transactions, AccountsPanel accountsPanel) {
+    this.transactions = transactions;
+    this.accountsPanel = accountsPanel; // Store reference
 
-        // Always initialize table model and table to prevent null issues
-        tableModel = new DefaultTableModel(
-                new String[]{"Date", "Account", "Category", "Notes", "Amount"}, 0
-        ) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        transactionTable = new JTable(tableModel);
-        transactionTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        transactionTable.setRowHeight(50);
-        transactionTable.setShowGrid(false);
-        transactionTable.setIntercellSpacing(new Dimension(0, 8));
-        transactionTable.setBackground(BACKGROUND);
-        transactionTable.setSelectionBackground(new Color(224, 231, 255));
-        transactionTable.setSelectionForeground(TEXT_PRIMARY);
+    // Always initialize table model and table to prevent null issues
+    tableModel = new DefaultTableModel(
+            new String[]{"Date", "Account", "Category", "Notes", "Amount"}, 0
+    ) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
+    transactionTable = new JTable(tableModel);
+    transactionTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+    transactionTable.setRowHeight(50);
+    transactionTable.setShowGrid(false);
+    transactionTable.setIntercellSpacing(new Dimension(0, 8));
+    transactionTable.setBackground(BACKGROUND);
+    transactionTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        setLayout(new BorderLayout());
-        setBackground(BACKGROUND);
-        buildUI();
-    }
+    setLayout(new BorderLayout());
+    setBackground(BACKGROUND);
+    buildUI();
+}
 
     private void buildUI() {
         removeAll();
@@ -58,6 +63,11 @@ public class TransactionsPanel extends JPanel {
             add(createEmptyState(), BorderLayout.CENTER);
         } else {
             add(createTableView(), BorderLayout.CENTER);
+        }
+
+        // Add button panel at bottom (only if there are transactions)
+        if (!transactions.isEmpty()) {
+            add(createButtonPanel(), BorderLayout.SOUTH);
         }
 
         revalidate();
@@ -112,55 +122,72 @@ public class TransactionsPanel extends JPanel {
         header.setFont(new Font("Segoe UI", Font.BOLD, 14));
         header.setBackground(PRIMARY);
         header.setForeground(Color.WHITE);
-        header.setBorder(BorderFactory.createEmptyBorder()); // no dark bottom line
+        header.setBorder(BorderFactory.createEmptyBorder());
         header.setReorderingAllowed(false);
-
 
         // ---- ROW RENDERER ----
         transactionTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
                                                         boolean isSelected, boolean hasFocus, int row, int column) {
-                JPanel rowPanel = new JPanel(new BorderLayout());
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
                 // Alternating row colors
-                Color bgColor = (row % 2 == 0) ? CARD_BG : new Color(235, 237, 240); // light grey
-                rowPanel.setBackground(bgColor);
-                rowPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+                if (!isSelected) {
+                    setBackground((row % 2 == 0) ? CARD_BG : new Color(235, 237, 240));
+                    setForeground(TEXT_PRIMARY);
+                } else {
+                    setBackground(new Color(100, 149, 237)); // Cornflower blue
+                    setForeground(Color.WHITE);
+                }
 
-                JLabel label = new JLabel(value.toString());
-                label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-                label.setForeground(TEXT_PRIMARY);
+                setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(isSelected ? PRIMARY.darker() : BORDER, isSelected ? 2 : 1, true),
+                    BorderFactory.createEmptyBorder(8, 15, 8, 15)
+                ));
 
                 // Specific formatting
                 if (column == 0) { // Date
-                    label.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                    label.setForeground(TEXT_SECONDARY);
+                    setFont(new Font("Segoe UI", Font.BOLD, 12));
+                    if (!isSelected) setForeground(TEXT_SECONDARY);
+                    setHorizontalAlignment(SwingConstants.LEFT);
                 } else if (column == 4) { // Amount
-                    label.setFont(new Font("Segoe UI", Font.BOLD, 16));
-                    label.setHorizontalAlignment(SwingConstants.RIGHT);
-                    String amount = value.toString();
-                    if (amount.startsWith("+")) label.setForeground(SUCCESS);
-                    else if (amount.startsWith("-")) label.setForeground(DANGER);
+                    setFont(new Font("Segoe UI", Font.BOLD, 16));
+                    setHorizontalAlignment(SwingConstants.RIGHT);
+                    if (!isSelected) {
+                        String amount = value.toString();
+                        if (amount.startsWith("+")) setForeground(SUCCESS);
+                        else if (amount.startsWith("-")) setForeground(DANGER);
+                    }
                 } else if (column == 2) { // Category
-                    label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                    setFont(new Font("Segoe UI", Font.BOLD, 14));
+                    setHorizontalAlignment(SwingConstants.LEFT);
                 } else if (column == 3) { // Notes
-                    label.setFont(new Font("Segoe UI", Font.ITALIC, 12));
-                    label.setForeground(TEXT_SECONDARY);
+                    setFont(new Font("Segoe UI", Font.ITALIC, 12));
+                    if (!isSelected) setForeground(TEXT_SECONDARY);
+                    setHorizontalAlignment(SwingConstants.LEFT);
+                } else {
+                    setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                    setHorizontalAlignment(SwingConstants.LEFT);
                 }
 
-                rowPanel.add(label, BorderLayout.CENTER);
+                return this;
+            }
+        });
 
-                if (isSelected) {
-                    rowPanel.setBackground(new Color(100, 149, 237)); // Cornflower blue
-                    label.setForeground(Color.WHITE);
-                    rowPanel.setBorder(BorderFactory.createCompoundBorder(
-                            BorderFactory.createLineBorder(PRIMARY.darker(), 2, true),
-                            BorderFactory.createEmptyBorder(10, 15, 10, 15)
-                    ));
+        // Clean deselection logic (same as AccountsPanel)
+        transactionTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = transactionTable.rowAtPoint(e.getPoint());
+                if (row != -1) {
+                    if (transactionTable.isRowSelected(row)) {
+                        // Deselect if clicking the already-selected row
+                        transactionTable.clearSelection();
+                    } else {
+                        transactionTable.setRowSelectionInterval(row, row);
+                    }
                 }
-
-                return rowPanel;
             }
         });
 
@@ -179,6 +206,118 @@ public class TransactionsPanel extends JPanel {
         return tablePanel;
     }
 
+    private JPanel createButtonPanel() {
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(1, 0, 0, 0, BORDER),
+            BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+
+        JButton deleteBtn = createModernButton("Delete Selected", DANGER, true);
+        deleteBtn.addActionListener(e -> deleteSelectedTransaction());
+        buttonPanel.add(deleteBtn);
+
+        return buttonPanel;
+    }
+
+    private JButton createModernButton(String text, Color color, boolean outlined) {
+        JButton btn = new JButton(text);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(outlined);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        
+        if (outlined) {
+            btn.setBackground(Color.WHITE);
+            btn.setForeground(color);
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(color, 2, true),
+                BorderFactory.createEmptyBorder(8, 20, 8, 20)
+            ));
+        } else {
+            btn.setBackground(color);
+            btn.setForeground(Color.WHITE);
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(color, 1, true),
+                BorderFactory.createEmptyBorder(8, 20, 8, 20)
+            ));
+        }
+        
+        btn.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (outlined) {
+                    btn.setBackground(new Color(249, 250, 251));
+                } else {
+                    btn.setBackground(color.darker());
+                }
+            }
+            @Override
+            public void mouseExited(MouseEvent e) {
+                btn.setBackground(outlined ? Color.WHITE : color);
+            }
+        });
+        
+        return btn;
+    }
+
+private void deleteSelectedTransaction() {
+        int selectedRow = transactionTable.getSelectedRow();
+        if (selectedRow >= 0) {
+            // Get the actual transaction (considering sorting)
+            ArrayList<Transaction> sortedTransactions = new ArrayList<>(transactions);
+            sortedTransactions.sort((t1, t2) -> t2.getDate().compareTo(t1.getDate()));
+            Transaction transaction = sortedTransactions.get(selectedRow);
+            
+            int result = JOptionPane.showConfirmDialog(this,
+                "Are you sure you want to delete this transaction?\n\n" +
+                "Date: " + transaction.getDate() + "\n" +
+                "Category: " + transaction.getCategory() + "\n" +
+                "Amount: ₱" + String.format("%,.2f", transaction.getAmount()),
+                "Confirm Deletion",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+            
+            if (result == JOptionPane.YES_OPTION) {
+                // Undo the transaction from the account balance
+                Account account = transaction.getAccount();
+                double amount = transaction.getAmount();
+                String type = transaction.getType();
+                
+                if (type.equals("Income")) {
+                    // Undo income: subtract from account
+                    account.setBalance(account.getBalance() - amount);
+                } else {
+                    // Undo expense: add back to account
+                    account.setBalance(account.getBalance() + amount);
+                }
+                
+                // Remove the transaction
+                transactions.remove(transaction);
+                
+                // Update displays
+                updateDisplay();
+                
+                // Refresh the accounts panel to show updated balance
+                if (accountsPanel != null) {
+                    accountsPanel.refreshTable();
+                }
+                
+                JOptionPane.showMessageDialog(this,
+                    "Transaction deleted successfully!\n" +
+                    "Account balance updated: ₱" + String.format("%,.2f", account.getBalance()),
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Please select a transaction to delete!", 
+                "No Selection", 
+                JOptionPane.WARNING_MESSAGE);
+        }
+    }
+    
     private JPanel createSummaryPanel() {
         JPanel summaryPanel = new JPanel(new GridLayout(1, 3, 20, 0));
         summaryPanel.setBackground(Color.WHITE);
