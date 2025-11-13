@@ -42,13 +42,62 @@ public class MainFrame extends JFrame {
         categoriesList.add(new Category("Shopping", "icons/category icons/shopping.png"));
 
         setTitle("ADV Expense Tracker");
-        setSize(1200, 800);  // Bigger window
+        setSize(1200, 800);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         getContentPane().setBackground(BACKGROUND);
 
-        // Modern Header
+        // Splash label (centered)
+        JLabel splashLabel = new JLabel("ADV Expense Tracker", SwingConstants.CENTER);
+        splashLabel.setFont(new Font("Segoe UI", Font.BOLD, 48));
+        splashLabel.setForeground(new Color(41, 128, 185, 0)); // start fully transparent
+        splashLabel.setBounds(0, getHeight() / 2 - 50, getWidth(), 100);
+        splashLabel.setOpaque(false);
+        getLayeredPane().add(splashLabel, JLayeredPane.PALETTE_LAYER);
+
+        setVisible(true);
+
+        // Fade-in
+        final int frames = 30;  // fade duration (30 frames ~ 1 sec)
+        final int delay = 30;   // ms per frame
+        final int[] step = {0};
+
+        Timer fadeInTimer = new Timer(delay, e -> {
+            float progress = (float) step[0] / frames;
+            splashLabel.setForeground(new Color(41, 128, 185, (int) (255 * progress)));
+            step[0]++;
+            if (step[0] > frames) {
+                ((Timer) e.getSource()).stop();
+
+                // Hold for 1 second before fading out
+                new Timer(1000, hold -> {
+                    ((Timer) hold.getSource()).stop();
+
+                    // Fade-out
+                    step[0] = 0;
+                    Timer fadeOutTimer = new Timer(delay, fe -> {
+                        float prog = (float) step[0] / frames;
+                        splashLabel.setForeground(new Color(41, 128, 185, (int) (255 * (1 - prog))));
+                        step[0]++;
+                        if (step[0] > frames) {
+                            ((Timer) fe.getSource()).stop();
+                            getLayeredPane().remove(splashLabel);
+                            initializeUI();
+                            repaint();
+                        }
+                    });
+                    fadeOutTimer.start();
+                }).start();
+            }
+        });
+        fadeInTimer.start();
+    }
+
+    // Build main UI after splash
+    private void initializeUI() {
+
+        // Header
         JLabel header = new JLabel("ADV Expense Tracker", SwingConstants.CENTER);
         header.setFont(new Font("Segoe UI", Font.BOLD, 28));
         header.setOpaque(true);
@@ -62,98 +111,88 @@ public class MainFrame extends JFrame {
         tabs.setFont(new Font("Segoe UI", Font.BOLD, 16));
         tabs.setBackground(TAB_BG);
         tabs.setForeground(TAB_TEXT);
-        tabs.setBorder(BorderFactory.createEmptyBorder());  // remove default border
+        tabs.setBorder(BorderFactory.createEmptyBorder());
 
-        // Remove extra border around tab content
         UIManager.put("TabbedPane.contentBorderInsets", new Insets(0, 0, 0, 0));
 
-        // Bigger tab height
-       tabs.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
-        private final int TAB_HEIGHT = 50;
+        tabs.setUI(new javax.swing.plaf.basic.BasicTabbedPaneUI() {
+            private final int TAB_HEIGHT = 50;
 
-        @Override
-        protected void installDefaults() {
-            super.installDefaults();
-            tabAreaInsets.left = 0;
-            tabAreaInsets.right = 0;
-            contentBorderInsets = new Insets(0, 0, 0, 0); // no border around content
-        }
+            @Override
+            protected void installDefaults() {
+                super.installDefaults();
+                tabAreaInsets.left = 0;
+                tabAreaInsets.right = 0;
+                contentBorderInsets = new Insets(0, 0, 0, 0);
+            }
 
-        @Override
-        protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
-            // Stretch tabs evenly across the entire width
-            return tabs.getWidth() / tabs.getTabCount();
-        }
+            @Override
+            protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
+                return tabs.getWidth() / tabs.getTabCount();
+            }
 
-        @Override
-        protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
-            return TAB_HEIGHT;
-        }
+            @Override
+            protected int calculateTabHeight(int tabPlacement, int tabIndex, int fontHeight) {
+                return TAB_HEIGHT;
+            }
 
-        @Override
-        protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
-                                        int x, int y, int w, int h, boolean isSelected) {
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            @Override
+            protected void paintTabBackground(Graphics g, int tabPlacement, int tabIndex,
+                                              int x, int y, int w, int h, boolean isSelected) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                Color bg = isSelected ? HEADER_BG : Color.WHITE;
+                g2.setColor(bg);
+                g2.fillRect(x, y, w, h);
+            }
 
-            Color bg = isSelected ? new Color(41, 128, 185) : Color.WHITE;
-            g2.setColor(bg);
-            g2.fillRect(x, y, w, h);
-        }
+            @Override
+            protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setColor(new Color(200, 200, 200));
+                g2.fillRect(0, tabs.getHeight() - 2, tabs.getWidth(), 2);
+            }
 
-        @Override
-        protected void paintContentBorder(Graphics g, int tabPlacement, int selectedIndex) {
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setColor(new Color(200, 200, 200)); // light gray bottom border
-            g2.fillRect(0, tabs.getHeight() - 2, tabs.getWidth(), 2);
-        }
+            @Override
+            protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex,
+                                          int x, int y, int w, int h, boolean isSelected) {
+            }
 
-        @Override
-        protected void paintTabBorder(Graphics g, int tabPlacement, int tabIndex,
-                                    int x, int y, int w, int h, boolean isSelected) {
-            // no extra border
-        }
+            @Override
+            protected void paintText(Graphics g, int tabPlacement, Font font, FontMetrics metrics,
+                                     int tabIndex, String title, Rectangle textRect, boolean isSelected) {
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                        RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2.setColor(isSelected ? Color.WHITE : TAB_TEXT);
+                g2.setFont(font);
+                g2.drawString(title, textRect.x, textRect.y + metrics.getAscent());
+            }
+        });
 
-        @Override
-        protected void paintText(Graphics g, int tabPlacement, Font font, FontMetrics metrics,
-                                int tabIndex, String title, Rectangle textRect, boolean isSelected) {
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, 
-                                RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-            // Set white text if selected, otherwise dark
-            g2.setColor(isSelected ? Color.WHITE : new Color(31, 41, 55)); // TEXT_PRIMARY
-            g2.setFont(font);
-            g2.drawString(title, textRect.x, textRect.y + metrics.getAscent());
-        }
-
-    });
-
-        // FIX: Create panels in correct order - AccountsPanel and TransactionsPanel FIRST
+        // Panels
         AccountsPanel accountsPanel = new AccountsPanel(accountsList);
         TransactionsPanel transactionsPanel = new TransactionsPanel(transactionsList);
-        
-        // Then create CategoriesPanel with references to both panels
         CategoriesPanel categoriesPanel = new CategoriesPanel(
-            categoriesList, transactionsList, accountsList, transactionsPanel, accountsPanel
+                categoriesList, transactionsList, accountsList, transactionsPanel, accountsPanel
         );
 
         tabs.addTab("Categories", categoriesPanel);
         tabs.addTab("Accounts", accountsPanel);
         tabs.addTab("Transactions", transactionsPanel);
 
-        // Wrap tabs in a shadowed panel to mimic "folder" feel
         JPanel tabWrapper = new JPanel(new BorderLayout());
         tabWrapper.setBackground(BACKGROUND);
-        tabWrapper.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20)); // padding
+        tabWrapper.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         tabWrapper.add(tabs, BorderLayout.CENTER);
 
         add(tabWrapper, BorderLayout.CENTER);
 
-        setVisible(true);
+        revalidate();
+        repaint();
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new MainFrame());
+        SwingUtilities.invokeLater(MainFrame::new);
     }
 }

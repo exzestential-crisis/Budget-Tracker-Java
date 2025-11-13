@@ -3,6 +3,7 @@ package ui;
 import model.Transaction;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
@@ -102,37 +103,68 @@ public class TransactionsPanel extends JPanel {
         tablePanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
 
         JScrollPane scrollPane = new JScrollPane(transactionTable);
-        scrollPane.setBorder(BorderFactory.createLineBorder(BORDER, 1, true));
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getViewport().setBackground(BACKGROUND);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
-        // Custom renderer
-        DefaultTableCellRenderer renderer = new DefaultTableCellRenderer() {
+        // ---- HEADER STYLE ----
+        JTableHeader header = transactionTable.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        header.setBackground(PRIMARY);
+        header.setForeground(Color.WHITE);
+        header.setBorder(BorderFactory.createEmptyBorder()); // no dark bottom line
+        header.setReorderingAllowed(false);
+
+
+        // ---- ROW RENDERER ----
+        transactionTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
-                                                           boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-                if (!isSelected) c.setBackground(CARD_BG);
-                setBorder(BorderFactory.createEmptyBorder(0, 15, 0, 15));
+                                                        boolean isSelected, boolean hasFocus, int row, int column) {
+                JPanel rowPanel = new JPanel(new BorderLayout());
 
-                if (column == 0) { setFont(new Font("Segoe UI", Font.BOLD, 12)); setForeground(TEXT_SECONDARY); }
-                else if (column == 4) {
-                    setFont(new Font("Segoe UI", Font.BOLD, 16)); setHorizontalAlignment(SwingConstants.RIGHT);
+                // Alternating row colors
+                Color bgColor = (row % 2 == 0) ? CARD_BG : new Color(235, 237, 240); // light grey
+                rowPanel.setBackground(bgColor);
+                rowPanel.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+
+                JLabel label = new JLabel(value.toString());
+                label.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                label.setForeground(TEXT_PRIMARY);
+
+                // Specific formatting
+                if (column == 0) { // Date
+                    label.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                    label.setForeground(TEXT_SECONDARY);
+                } else if (column == 4) { // Amount
+                    label.setFont(new Font("Segoe UI", Font.BOLD, 16));
+                    label.setHorizontalAlignment(SwingConstants.RIGHT);
                     String amount = value.toString();
-                    if (amount.startsWith("+")) setForeground(SUCCESS);
-                    else if (amount.startsWith("-")) setForeground(DANGER);
+                    if (amount.startsWith("+")) label.setForeground(SUCCESS);
+                    else if (amount.startsWith("-")) label.setForeground(DANGER);
+                } else if (column == 2) { // Category
+                    label.setFont(new Font("Segoe UI", Font.BOLD, 14));
+                } else if (column == 3) { // Notes
+                    label.setFont(new Font("Segoe UI", Font.ITALIC, 12));
+                    label.setForeground(TEXT_SECONDARY);
                 }
-                else if (column == 2) { setFont(new Font("Segoe UI", Font.BOLD, 14)); }
-                else if (column == 3) { setFont(new Font("Segoe UI", Font.ITALIC, 12)); setForeground(TEXT_SECONDARY); }
-                else { setFont(new Font("Segoe UI", Font.PLAIN, 14)); }
 
-                return c;
+                rowPanel.add(label, BorderLayout.CENTER);
+
+                if (isSelected) {
+                    rowPanel.setBackground(new Color(100, 149, 237)); // Cornflower blue
+                    label.setForeground(Color.WHITE);
+                    rowPanel.setBorder(BorderFactory.createCompoundBorder(
+                            BorderFactory.createLineBorder(PRIMARY.darker(), 2, true),
+                            BorderFactory.createEmptyBorder(10, 15, 10, 15)
+                    ));
+                }
+
+                return rowPanel;
             }
-        };
+        });
 
-        for (int i = 0; i < transactionTable.getColumnCount(); i++)
-            transactionTable.getColumnModel().getColumn(i).setCellRenderer(renderer);
-
+        // Column widths
         transactionTable.getColumnModel().getColumn(0).setPreferredWidth(120);
         transactionTable.getColumnModel().getColumn(1).setPreferredWidth(150);
         transactionTable.getColumnModel().getColumn(2).setPreferredWidth(150);
@@ -142,7 +174,7 @@ public class TransactionsPanel extends JPanel {
         tablePanel.add(scrollPane, BorderLayout.CENTER);
         tablePanel.add(createSummaryPanel(), BorderLayout.SOUTH);
 
-        refreshTableData(); // populate table rows
+        refreshTableData();
 
         return tablePanel;
     }

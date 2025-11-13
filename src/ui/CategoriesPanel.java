@@ -5,6 +5,7 @@ import model.Transaction;
 import model.Account;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicScrollBarUI;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.event.*;
@@ -41,26 +42,24 @@ public class CategoriesPanel extends JPanel {
     private static final Color BORDER = new Color(229, 231, 235);
     private static final Color HOVER = new Color(243, 244, 246);
 
-public CategoriesPanel(ArrayList<Category> categories, 
-                       ArrayList<Transaction> transactions, 
-                       ArrayList<Account> accounts, 
-                       TransactionsPanel transactionsPanel,
-                       AccountsPanel accountsPanel) {
-    this.categories = categories;
-    this.transactions = transactions;
-    this.accounts = accounts;
-        this.accountsPanel = accountsPanel;
-        this.transactionsPanel = transactionsPanel;
+    public CategoriesPanel(ArrayList<Category> categories, 
+                        ArrayList<Transaction> transactions, 
+                        ArrayList<Account> accounts, 
+                        TransactionsPanel transactionsPanel,
+                        AccountsPanel accountsPanel) {
+        this.categories = categories;
+        this.transactions = transactions;
+        this.accounts = accounts;
+            this.accountsPanel = accountsPanel;
+            this.transactionsPanel = transactionsPanel;
 
-    // FIX: Initialize the categoryCheckboxes map
-    this.categoryCheckboxes = new HashMap<>();
+        // FIX: Initialize the categoryCheckboxes map
+        this.categoryCheckboxes = new HashMap<>();
 
-    setLayout(new BorderLayout());
-    updateCategoriesDisplay();
-}
+        setLayout(new BorderLayout());
+        updateCategoriesDisplay();
+    }
 
-
-    
     private void separateCategories() {
         expenseCategories = new ArrayList<>();
         incomeCategories = new ArrayList<>();
@@ -75,6 +74,60 @@ public CategoriesPanel(ArrayList<Category> categories,
             }
         }
     }
+
+    private JScrollPane createModernScrollPane(JPanel content) {
+    JScrollPane scrollPane = new JScrollPane(content);
+    scrollPane.setBorder(null);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    
+    // Smooth scrolling
+    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+    // Modernize the scrollbar
+    JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
+    verticalBar.setUI(new BasicScrollBarUI() {
+        private final Dimension d = new Dimension();
+        
+        @Override
+        protected JButton createDecreaseButton(int orientation) {
+            return createZeroButton();
+        }
+
+        @Override
+        protected JButton createIncreaseButton(int orientation) {
+            return createZeroButton();
+        }
+
+        private JButton createZeroButton() {
+            JButton button = new JButton();
+            button.setPreferredSize(new Dimension(0, 0));
+            button.setMinimumSize(new Dimension(0, 0));
+            button.setMaximumSize(new Dimension(0, 0));
+            return button;
+        }
+
+        @Override
+        protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+            g.setColor(new Color(248, 249, 250)); // light background
+            g.fillRect(trackBounds.x, trackBounds.y, trackBounds.width, trackBounds.height);
+        }
+
+        @Override
+        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(200, 200, 200, 180)); // thumb color
+            g2.fillRoundRect(thumbBounds.x + 2, thumbBounds.y + 2, thumbBounds.width - 4, thumbBounds.height - 4, 10, 10);
+            g2.dispose();
+        }
+    });
+
+    verticalBar.setOpaque(false);
+    
+    return scrollPane;
+}
+
 
 private void updateCategoriesDisplay() {
     // FIX: separate categories before creating grids
@@ -104,9 +157,7 @@ private void updateCategoriesDisplay() {
     contentPanel.add(incomePanel);
     contentPanel.add(Box.createVerticalGlue());
 
-        JScrollPane scrollPane = new JScrollPane(contentPanel);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        JScrollPane scrollPane = createModernScrollPane(contentPanel);
         add(scrollPane, BorderLayout.CENTER);
 
         // Modern floating action bar
