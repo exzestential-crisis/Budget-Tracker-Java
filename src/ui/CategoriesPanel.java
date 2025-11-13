@@ -86,9 +86,7 @@
 
         // Modernize the scrollbar
         JScrollBar verticalBar = scrollPane.getVerticalScrollBar();
-        verticalBar.setUI(new BasicScrollBarUI() {
-            private final Dimension d = new Dimension();
-            
+        verticalBar.setUI(new BasicScrollBarUI() {            
             @Override
             protected JButton createDecreaseButton(int orientation) {
                 return createZeroButton();

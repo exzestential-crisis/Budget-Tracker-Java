@@ -17,7 +17,6 @@ public class AccountsPanel extends JPanel {
     private ArrayList<Account> accounts;
     private DefaultTableModel tableModel;
     private JTable accountsTable;
-    private JPanel contentPanel;
     private String selectedAccountType;
 
     // Modern color palette (matching CategoriesPanel)
@@ -26,7 +25,6 @@ public class AccountsPanel extends JPanel {
     private static final Color PRIMARY = new Color(41, 128, 185); // Blue
     private static final Color SUCCESS = new Color(34, 197, 94); // Green
     private static final Color DANGER = new Color(239, 68, 68); // Red
-    private static final Color WARNING = new Color(251, 146, 60); // Orange
     private static final Color TEXT_PRIMARY = new Color(31, 41, 55);
     private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
     private static final Color BORDER = new Color(229, 231, 235);

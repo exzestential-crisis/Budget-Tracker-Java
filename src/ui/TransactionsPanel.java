@@ -28,7 +28,6 @@ public class TransactionsPanel extends JPanel {
     private static final Color TEXT_PRIMARY = new Color(31, 41, 55);
     private static final Color TEXT_SECONDARY = new Color(107, 114, 128);
     private static final Color BORDER = new Color(229, 231, 235);
-    private static final Color HOVER = new Color(243, 244, 246);
 
     public TransactionsPanel(ArrayList<Transaction> transactions, AccountsPanel accountsPanel) {
     this.transactions = transactions;

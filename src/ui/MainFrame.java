@@ -19,7 +19,6 @@ public class MainFrame extends JFrame {
     private static final Color HEADER_BG = new Color(41, 128, 185);
     private static final Color HEADER_TEXT = Color.WHITE;
     private static final Color TAB_BG = Color.WHITE;
-    private static final Color TAB_SELECTED = new Color(99, 102, 241); // Indigo
     private static final Color TAB_TEXT = new Color(31, 41, 55);
 
     public MainFrame() {
@@ -176,7 +175,7 @@ public class MainFrame extends JFrame {
         CategoriesPanel categoriesPanel = new CategoriesPanel(
                 categoriesList, transactionsList, accountsList, transactionsPanel, accountsPanel
         );
-        
+
         tabs.addTab("Categories", categoriesPanel);
         tabs.addTab("Accounts", accountsPanel);
         tabs.addTab("Transactions", transactionsPanel);
